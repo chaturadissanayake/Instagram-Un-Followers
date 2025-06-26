@@ -3,119 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Follower Tracker</title>
+    <title>Instagram Public Follower Tracker</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" media="(max-width: 768px)" href="{{ url_for('static', filename='css/mobile.css') }}">
 </head>
 <body>
-    <div class="container py-5">
-        <div class="card shadow-lg mx-auto" style="max-width: 600px;">
-            <div class="card-header bg-primary text-white">
-                <h1 class="text-center"><i class="fab fa-instagram me-2"></i>Follower Tracker</h1>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fab fa-instagram"></i>
+                <h1>Follower Tracker</h1>
             </div>
-            
-            <div class="card-body p-4">
-                <!-- Progress indicators -->
-                <div id="progress-section" class="d-none">
-                    <div class="text-center mb-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p id="progress-text" class="mt-2">Fetching your followers...</p>
-                    </div>
-                    <div class="progress mb-3">
-                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                             role="progressbar" style="width: 0%"></div>
-                    </div>
-                </div>
-                
-                <!-- Results section -->
-                <div id="results-section" class="d-none">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
-                        <h3>Tracking Complete!</h3>
-                    </div>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <div class="card bg-light h-100">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">New Followers</h5>
-                                    <p id="new-count" class="display-6 text-success">0</p>
-                                    <a id="download-new" class="btn btn-outline-success w-100">
-                                        <i class="fas fa-download me-2"></i>Download List
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card bg-light h-100">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Unfollowers</h5>
-                                    <p id="unfollowers-count" class="display-6 text-danger">0</p>
-                                    <a id="download-unfollowers" class="btn btn-outline-danger w-100">
-                                        <i class="fas fa-download me-2"></i>Download List
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button id="track-again" class="btn btn-primary">
-                            <i class="fas fa-sync me-2"></i>Track Again
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Login form -->
-                <form id="tracker-form" class="needs-validation" novalidate>
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Instagram Username</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <input type="text" class="form-control" id="username" 
-                                   placeholder="Your Instagram username" required>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Instagram Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <input type="password" class="form-control" id="password" 
-                                   placeholder="Your Instagram password" required>
-                        </div>
-                        <div class="form-text">
-                            We don't store your password. It's only used for authentication.
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="target_account" class="form-label">Account to Track</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="target_account" 
-                                   placeholder="Account username (usually yours)" required>
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-play me-2"></i>Track Followers
-                        </button>
-                    </div>
-                </form>
-            </div>
-            
-            <div class="card-footer text-center text-muted">
-                <small>This tool helps track followers/unfollowers. Use responsibly.</small>
-            </div>
+            <p class="tagline">Track followers for public Instagram accounts</p>
         </div>
-    </div>
+    </header>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
-</html>
+    <main class="container">
+        <div class="card">
+            <div class="card-body">
+                <!-- Introduction -->
+                <section class="intro">
+                    <h2><i class="fas fa-rocket"></i> How It Works</h2>
+                    <ol>
+                        <li>Enter a <strong>public</strong> Instagram username</li>
+                        <li>We'll fetch current followers</li>
+                        <li>Compare with previous data</li>
+                        <li>Show you new followers and unfollowers</li>
+                        <li>Download full lists anytime</li>
+                    </ol>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Note: Only works with public accounts. No login required!
+                    </div>
+                </section>
+                
+                <!-- Form Section -->
+                <section id="form-section">
+                    <form id="track-form">
+                        <div class="form-group">
+                            <label for="username"><i class="fas fa-user"></i> Instagram Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text">@</span>
+                                <input type="text" class="form-control" id="username" placeholder="Enter public username" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Track Followers
+                        </button>
+                    </form>
+                </section>
+                
+                <!-- Progress Section -->
+                <section id="progress-section" class="d-none">
+                    <div class="progress-container">
+                        <div class="spinner">
+                            <div class="bounce1"></div>
+                            <div class="bounce2"></div>
+                            <div class="bounce3"></div>
+                        </div>
+                        <h3>Analyzing followers...</h3>
+                        <p id="progress-text">Fetching data from Instagram</p>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar"></div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Results Section -->
+                <section id="results-section" class="d-none">
+                    <div class="results-header">
+                        <i class="fas fa-check-circle"></i>
+                        <h2>Tracking Complete!</h2>
+                        <p>Here's what changed since last time</p>
+                    </div>
+                    
+                    <div class="results-summary">
+                        <div class="result-card new-followers">
+                            <h3>New Followers</h3>
+                            <div class="count" id="new-count">0</div>
+                            <ul id="new-list
