@@ -1,0 +1,58 @@
+/* style.css */
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #405DE6, #833AB4);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #344bc0, #6a2a9c);
+}
+
+.progress {
+    height: 1.5rem;
+    border-radius: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .card {
+        margin: 0 1rem;
+    }
+    
+    .display-6 {
+        font-size: 1.8rem;
+    }
+}
+
+/* Animation for progress text */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+#progress-text {
+    animation: pulse 2s infinite;
+    font-weight: 500;
+}
