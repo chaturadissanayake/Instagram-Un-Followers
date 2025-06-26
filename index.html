@@ -83,4 +83,56 @@
                         <div class="result-card new-followers">
                             <h3>New Followers</h3>
                             <div class="count" id="new-count">0</div>
-                            <ul id="new-list
+                            <ul id="new-list" class="follower-list"></ul>
+                            <a id="download-new" class="btn download-btn">
+                                <i class="fas fa-download"></i> Download Full List
+                            </a>
+                        </div>
+                        
+                        <div class="result-card unfollowers">
+                            <h3>Unfollowers</h3>
+                            <div class="count" id="unfollowers-count">0</div>
+                            <ul id="unfollowers-list" class="follower-list"></ul>
+                            <a id="download-unfollowers" class="btn download-btn">
+                                <i class="fas fa-download"></i> Download Full List
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="actions">
+                        <button id="new-track" class="btn btn-secondary">
+                            <i class="fas fa-sync"></i> Track Another Account
+                        </button>
+                        <button id="save-data" class="btn btn-outline-primary">
+                            <i class="fas fa-save"></i> Save Session
+                        </button>
+                    </div>
+                </section>
+                
+                <!-- Error Section -->
+                <section id="error-section" class="d-none">
+                    <div class="error-card">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Something Went Wrong</h3>
+                        <p id="error-message"></p>
+                        <button id="try-again" class="btn btn-primary">Try Again</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>This tool helps track followers/unfollowers for public Instagram accounts. Use responsibly.</p>
+            <p class="disclaimer">
+                <i class="fas fa-exclamation-circle"></i> 
+                Disclaimer: This is not affiliated with Instagram. Data is stored temporarily and deleted after session ends.
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
