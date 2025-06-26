@@ -1,18 +1,19 @@
-// script.js
 $(document).ready(function() {
     // Handle form submission
-    $('#tracker-form').on('submit', function(e) {
+    $('#track-form').on('submit', function(e) {
         e.preventDefault();
+        const username = $('#username').val().trim();
         
-        // Get form data
-        const username = $('#username').val();
-        const password = $('#password').val();
-        const target_account = $('#target_account').val();
+        if (!username) {
+            showError("Please enter a username");
+            return;
+        }
         
-        // Show progress UI
-        $('#tracker-form').addClass('d-none');
-        $('#progress-section').removeClass('d-none');
-        $('#results-section').addClass('d-none');
+        // Show progress, hide other sections
+        $('#form-section').slideUp();
+        $('#error-section').hide();
+        $('#progress-section').removeClass('d-none').slideDown();
+        $('#results-section').hide();
         
         // Simulate progress animation
         simulateProgress();
@@ -21,16 +22,20 @@ $(document).ready(function() {
         $.ajax({
             url: '/track',
             method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                username: username,
-                password: password,
-                target_account: target_account
-            }),
+            data: {
+                username: username
+            },
             success: function(response) {
-                // Handle success response
                 if (response.error) {
                     showError(response.error);
+                    return;
+                }
+                
+                // If it's the first run (baseline saved)
+                if (response.message) {
+                    $('#progress-section').slideUp();
+                    $('#form-section').slideDown();
+                    alert(response.message + " Current followers: " + response.current_count);
                     return;
                 }
                 
@@ -38,8 +43,7 @@ $(document).ready(function() {
                 showResults(response);
             },
             error: function(xhr) {
-                // Handle errors
-                let errorMsg = "An error occurred. Please try again.";
+                let errorMsg = "An error occurred. Please try again later.";
                 if (xhr.responseJSON && xhr.responseJSON.error) {
                     errorMsg = xhr.responseJSON.error;
                 }
@@ -48,32 +52,51 @@ $(document).ready(function() {
         });
     });
     
-    // Track again button
-    $('#track-again').on('click', function() {
-        $('#results-section').addClass('d-none');
-        $('#tracker-form').removeClass('d-none');
-        $('#username').val('');
-        $('#password').val('');
-        $('#target_account').val('');
-        $('#username').focus();
+    // New track button
+    $('#new-track').on('click', function() {
+        $('#results-section').slideUp();
+        $('#form-section').slideDown();
+        $('#username').val('').focus();
+    });
+    
+    // Try again button
+    $('#try-again').on('click', function() {
+        $('#error-section').slideUp();
+        $('#form-section').slideDown();
+    });
+    
+    // Save session button
+    $('#save-data').on('click', function() {
+        alert('Your session has been saved. Return anytime to see changes!');
     });
     
     function simulateProgress() {
+        const $progressBar = $('.progress-bar');
         let width = 0;
+        
         const interval = setInterval(() => {
-            if (width >= 90) {
+            if (width >= 80) {
                 clearInterval(interval);
                 return;
             }
             width += 5;
-            $('#progress-bar').css('width', width + '%');
+            $progressBar.css('width', width + '%');
+            
+            // Update progress text
+            if (width < 30) {
+                $('#progress-text').text('Connecting to Instagram...');
+            } else if (width < 60) {
+                $('#progress-text').text('Fetching followers...');
+            } else {
+                $('#progress-text').text('Analyzing changes...');
+            }
         }, 300);
     }
     
     function showError(message) {
-        $('#progress-section').addClass('d-none');
-        $('#tracker-form').removeClass('d-none');
-        alert('Error: ' + message);
+        $('#progress-section').slideUp();
+        $('#error-section').removeClass('d-none').slideDown();
+        $('#error-message').text(message);
     }
     
     function showResults(data) {
@@ -81,17 +104,34 @@ $(document).ready(function() {
         $('#new-count').text(data.new_count);
         $('#unfollowers-count').text(data.unfollowers_count);
         
+        // Update sample lists
+        const $newList = $('#new-list').empty();
+        const $unfollowersList = $('#unfollowers-list').empty();
+        
+        if (data.new_followers && data.new_followers.length > 0) {
+            data.new_followers.forEach(user => {
+                $newList.append(`<li>${user}</li>`);
+            });
+        } else {
+            $newList.append('<li class="text-muted">No new followers</li>');
+        }
+        
+        if (data.unfollowers && data.unfollowers.length > 0) {
+            data.unfollowers.forEach(user => {
+                $unfollowersList.append(`<li>${user}</li>`);
+            });
+        } else {
+            $unfollowersList.append('<li class="text-muted">No unfollowers</li>');
+        }
+        
         // Set download links
-        $('#download-new').attr('href', `/download/new_followers/${data.session_id}`);
+        $('#download-new').attr('href', `/download/new/${data.session_id}`);
         $('#download-unfollowers').attr('href', `/download/unfollowers/${data.session_id}`);
         
-        // Complete progress bar
-        $('#progress-bar').css('width', '100%');
-        
-        // Show results after delay for better UX
+        // Show results after a small delay
         setTimeout(() => {
-            $('#progress-section').addClass('d-none');
-            $('#results-section').removeClass('d-none');
-        }, 800);
+            $('#progress-section').slideUp();
+            $('#results-section').removeClass('d-none').slideDown();
+        }, 500);
     }
 });
