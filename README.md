@@ -1,16 +1,19 @@
-# Instagram Follower Tracker
+# Instagram Public Follower Tracker
 
-A user-friendly tool to track your Instagram followers and unfollowers.
+Track followers/unfollowers for public Instagram accounts without login.
 
 ## Features
-- Track new followers
-- Identify unfollowers
-- Download results as text files
-- Responsive design (works on mobile and desktop)
-- Secure session management
+- 🚫 No Instagram credentials required
+- 📱 Responsive design works on mobile & desktop
+- 📊 Visual results with sample lists
+- 💾 Download full follower/unfollower lists
+- 🔄 Session-based tracking
 
 ## Installation
-1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/instagram-follower-tracker.git
-cd instagram-follower-tracker
+# Clone repository
+git clone https://github.com/yourusername/instagram-public-tracker.git
+cd instagram-public-tracker
+
+# Install dependencies
+pip install -r requirements.txt
