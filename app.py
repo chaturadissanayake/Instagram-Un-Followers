@@ -1,118 +1,153 @@
-# app.py
-from flask import Flask, render_template, request, jsonify, send_file, session
-import instaloader
 import os
 import json
+import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
+from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for
 import uuid
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.config['SESSION_TYPE'] = 'filesystem'
 
-# Create data directories if not exists
-os.makedirs('sessions', exist_ok=True)
+# Create data directory if it doesn't exist
 os.makedirs('data', exist_ok=True)
 
-def get_followers_list(username, password, target_account):
-    """Fetch followers from Instagram"""
-    L = instaloader.Instaloader()
-    session_file = f"sessions/{username}_session"
+def get_followers(username):
+    """Scrape followers from public Instagram profile"""
+    url = f"https://www.instagram.com/{username}/"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
     
     try:
-        if os.path.exists(session_file):
-            L.load_session_from_file(username, session_file)
-        else:
-            L.login(username, password)
-            L.save_session_to_file(session_file)
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        if response.status_code == 404:
+            return None, "Account not found or is private"
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        script_tag = soup.find('script', type='application/ld+json')
+        
+        if not script_tag:
+            return None, "Could not extract follower data. Instagram may have changed their structure."
+        
+        try:
+            profile_data = json.loads(script_tag.string)
+        except json.JSONDecodeError:
+            return None, "Failed to parse profile data."
+        
+        # Extract followers from the interactionStatistic
+        followers = set()
+        for stat in profile_data.get('mainEntityOfPage', {}).get('interactionStatistic', []):
+            if 'followers' in stat.get('name', '').lower():
+                # The identifier might be a URL, we take the last part as the username
+                user_url = stat.get('identifier', '')
+                if user_url:
+                    # Extract username from URL
+                    user = user_url.rstrip('/').split('/')[-1]
+                    followers.add(user)
+                break
+        
+        return followers, None
+    except requests.exceptions.RequestException as e:
+        return None, f"Network error: {str(e)}"
     except Exception as e:
-        raise Exception(f"Login failed: {str(e)}")
-    
-    try:
-        profile = instaloader.Profile.from_username(L.context, target_account)
-        return set(follower.username for follower in profile.get_followers())
-    except Exception as e:
-        raise Exception(f"Couldn't fetch followers: {str(e)}")
+        return None, f"Unexpected error: {str(e)}"
+
+def save_session_data(session_id, followers):
+    """Save followers data for a session"""
+    session_file = f"data/{session_id}.json"
+    with open(session_file, 'w') as f:
+        json.dump({
+            "timestamp": datetime.now().isoformat(),
+            "followers": list(followers)
+        }, f)
+
+def load_session_data(session_id):
+    """Load followers data from session"""
+    session_file = f"data/{session_id}.json"
+    if os.path.exists(session_file):
+        with open(session_file, 'r') as f:
+            data = json.load(f)
+            return set(data['followers'])
+    return None
 
 @app.route('/', methods=['GET'])
 def index():
-    """Main page with clean UI"""
+    """Render the main page"""
     return render_template('index.html')
 
 @app.route('/track', methods=['POST'])
-def track_followers():
-    """Process tracking request"""
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    target_account = data.get('target_account')
+def track():
+    """Handle tracking request"""
+    username = request.form.get('username').strip()
+    if not username:
+        return jsonify({"error": "Please enter a username"}), 400
     
-    if not all([username, password, target_account]):
-        return jsonify({"error": "All fields are required"}), 400
-    
-    try:
-        # Get current followers
-        current_followers = get_followers_list(username, password, target_account)
-        
-        # Generate unique ID for this session
+    # Check for existing session
+    session_id = session.get('session_id')
+    if not session_id:
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
-        
-        # Prepare data storage
-        data_dir = f"data/{session_id}"
-        os.makedirs(data_dir, exist_ok=True)
-        
-        # Check for previous data
-        previous_file = f"{data_dir}/previous.json"
-        previous_followers = set()
-        
-        if os.path.exists(previous_file):
-            with open(previous_file, 'r') as f:
-                previous_data = json.load(f)
-                previous_followers = set(previous_data.get('followers', []))
-        
-        # Calculate changes
-        new_followers = list(current_followers - previous_followers)
-        unfollowers = list(previous_followers - current_followers)
-        
-        # Save current data for next comparison
-        with open(previous_file, 'w') as f:
-            json.dump({
-                "timestamp": datetime.now().isoformat(),
-                "followers": list(current_followers)
-            }, f)
-        
-        # Save results for download
-        with open(f"{data_dir}/new_followers.txt", 'w') as f:
-            f.write("\n".join(new_followers))
-        
-        with open(f"{data_dir}/unfollowers.txt", 'w') as f:
-            f.write("\n".join(unfollowers))
-        
+    
+    # Get current followers
+    current_followers, error = get_followers(username)
+    if error:
+        return jsonify({"error": error}), 400
+    
+    # Load previous followers from session
+    previous_followers = load_session_data(session_id)
+    
+    # Save current as new previous
+    save_session_data(session_id, current_followers)
+    
+    # Compare
+    if previous_followers is None:
+        # First run, no comparison
         return jsonify({
-            "new_count": len(new_followers),
-            "unfollowers_count": len(unfollowers),
-            "session_id": session_id
+            "message": "Baseline saved. Run again later to see changes.",
+            "current_count": len(current_followers)
         })
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    
+    new_followers = list(current_followers - previous_followers)
+    unfollowers = list(previous_followers - current_followers)
+    
+    # Save result files for download
+    new_file = f"data/{session_id}_new.txt"
+    unfollowers_file = f"data/{session_id}_unfollowers.txt"
+    
+    with open(new_file, 'w') as f:
+        f.write("\n".join(new_followers))
+    
+    with open(unfollowers_file, 'w') as f:
+        f.write("\n".join(unfollowers))
+    
+    return jsonify({
+        "new_count": len(new_followers),
+        "unfollowers_count": len(unfollowers),
+        "session_id": session_id,
+        "new_followers": new_followers[:5],  # Show first 5
+        "unfollowers": unfollowers[:5]       # Show first 5
+    })
 
-@app.route('/download/<file_type>/<session_id>')
-def download_file(file_type, session_id):
+@app.route('/download/<type>/<session_id>')
+def download(type, session_id):
     """Download result files"""
-    valid_types = ['new_followers', 'unfollowers']
-    if file_type not in valid_types:
+    valid_types = ['new', 'unfollowers']
+    if type not in valid_types:
         return "Invalid file type", 400
     
-    try:
-        return send_file(
-            f"data/{session_id}/{file_type}.txt",
-            as_attachment=True,
-            download_name=f"{file_type}_{session_id[:8]}.txt"
-        )
-    except FileNotFoundError:
+    filename = f"data/{session_id}_{type}.txt"
+    if not os.path.exists(filename):
         return "File not found", 404
+    
+    return send_file(
+        filename,
+        as_attachment=True,
+        download_name=f"{type}_{session_id[:8]}.txt"
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
